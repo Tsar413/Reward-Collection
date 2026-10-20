@@ -1,11 +1,11 @@
 package com.study.rewardCollection.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,23 +14,25 @@ import java.time.LocalDateTime;
 @Data
 public class AwardRecord {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-
-    @Column(name = "org_code", length = 50)
-    @TableField(value = "org_code")
-    private String orgCode;
 
     @Column(name = "award_type", length = 20)
     @TableField(value = "award_type")
     private String awardType;
 
-    @Column(name = "student_no", length = 50)
-    @TableField("student_no")
-    private String studentNo;
+    @Column(name = "org_id", nullable = false)
+    @TableField("org_id")
+    private Long orgId;
 
-    @Column(name = "class_code", length = 50)
-    @TableField(value = "class_code")
-    private String classCode;
+    @Column(name = "student_user_id")
+    @TableField("student_user_id")
+    private Long studentUserId;
+
+    @Column(name = "class_id", nullable = false)
+    @TableField("class_id")
+    private Long classId;
 
     @Column(name = "award_name", length = 200)
     @TableField("award_name")
@@ -52,14 +54,14 @@ public class AwardRecord {
     @TableField("award_grade")
     private String awardGrade;
 
-    @Column(name = "issuing_organization", length = 50)
+    @Column(name = "issuing_organization", length = 200)
     @TableField("issuing_organization")
     private String issuingOrganization;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Column(name = "award_date", columnDefinition = "DATETIME")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @Column(name = "award_date", columnDefinition = "DATE")
     @TableField("award_date")
-    private LocalDateTime awardDate;
+    private LocalDate awardDate;
 
     @Column(name = "certificate_no", length = 100)
     @TableField("certificate_no")
@@ -73,9 +75,11 @@ public class AwardRecord {
     @TableField("uploaded_by")
     private Long uploadedBy;
 
-    @Column(name = "is_deleted")
+    // 0：未删除；1：已删除
+    @TableLogic(value = "0", delval = "1")
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "TINYINT DEFAULT 0")
     @TableField("is_deleted")
-    private Integer isDeleted;
+    private Integer isDeleted = 0;
 
     @Column(name = "updated_by")
     @TableField("updated_by")

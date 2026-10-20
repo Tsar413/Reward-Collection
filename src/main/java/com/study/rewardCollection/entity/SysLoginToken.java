@@ -18,11 +18,13 @@ import java.time.LocalDateTime;
 @Data
 public class SysLoginToken {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "user_id", unique = true, nullable = false, length = 50)
+    @Column(name = "user_id", unique = true, nullable = false)
     @TableField("user_id")
-    private String userId;
+    private Long userId;
 
     @JsonIgnore
     @ToString.Exclude
@@ -39,4 +41,14 @@ public class SysLoginToken {
     @Column(columnDefinition = "DATETIME", name = "revoke_time")
     @TableField(value = "revoke_time")
     private LocalDateTime revokeTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "create_time", nullable = false, columnDefinition = "DATETIME")
+    @TableField("create_time")
+    private LocalDateTime createTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "update_time", nullable = false, columnDefinition = "DATETIME")
+    @TableField("update_time")
+    private LocalDateTime updateTime;
 }

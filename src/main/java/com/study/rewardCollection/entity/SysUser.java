@@ -1,13 +1,12 @@
 package com.study.rewardCollection.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
 
@@ -19,11 +18,17 @@ import java.time.LocalDateTime;
 @Data
 public class SysUser {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @Column(name = "org_code", length = 50)
-    @TableField(value = "org_code")
-    private String orgCode;
+    @Column(name = "org_id", nullable = false)
+    @TableField("org_id")
+    private Long orgId;
+
+    @Column(name = "class_id")
+    @TableField("class_id")
+    private Long classId;
 
     @Column(length = 50)
     private String username;
@@ -34,10 +39,6 @@ public class SysUser {
 
     @Column(length = 20)
     private String role;
-
-    @Column(name = "class_code", length = 50)
-    @TableField(value = "class_code")
-    private String classCode;
 
     @Column(name = "student_no", length = 50)
     @TableField("student_no")

@@ -24,15 +24,25 @@ public class SysOrgController {
 
     @GetMapping("/one/{id}")
     public ResponseEntity<Result<SysOrg>> getOneOrg(@PathVariable Long id){
-        return ResponseEntity.ok(Result.success(service.getById(id)));
+        SysOrg sysOrg = service.getById(id);
+        if (sysOrg == null) {
+            return ResponseEntity.status(404).body(new Result<SysOrg>(404, "组织不存在", null));
+        }
+        return ResponseEntity.ok(Result.success(sysOrg));
     }
 
     @PostMapping("/add")
     public ResponseEntity<Result<Integer>> addNewOrg(@RequestBody SysOrgDTO sysOrgDTO){
         Integer result = service.addNewOrg(sysOrgDTO);
-        if(result == -2){
-            return ResponseEntity.status(500).body(Result.error("存在空数据"));
+        if (result == -2) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织编号和名称不能为空"));
         }
-        return ResponseEntity.ok(Result.success(1));
+        if (result == -3) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织编号最多50字、名称最多100字、备注最多500字"));
+        }
+        if (result == -4) {
+            return ResponseEntity.status(409).body(new Result<Integer>(409, "组织编号已存在", null));
+        }
+        return ResponseEntity.ok(Result.success(result));
     }
 }

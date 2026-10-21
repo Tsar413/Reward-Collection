@@ -7,4 +7,8 @@ import com.study.rewardCollection.entity.SysOrg;
 public interface SysOrgService extends IService<SysOrg> {
 
     Integer addNewOrg(SysOrgDTO sysOrgDTO);
+
+    Integer updateOrg(SysOrgDTO sysOrgDTO, Long id);
+
+    Integer deleteOrg(Long id);
 }

@@ -45,4 +45,28 @@ public class SysOrgController {
         }
         return ResponseEntity.ok(Result.success(result));
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Result<Integer>> updateOrg(@RequestBody SysOrgDTO sysOrgDTO, @PathVariable Long id){
+        Integer result = service.updateOrg(sysOrgDTO, id);
+        if (result == -2) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织编号和名称不能为空"));
+        }
+        if (result == -3) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织编号最多50字、名称最多100字、备注最多500字"));
+        }
+        if (result == -4) {
+            return ResponseEntity.status(404).body(new Result<Integer>(404, "组织编号不存在", null));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Result<Integer>> updateOrg(@PathVariable Long id){
+        Integer result = service.deleteOrg(id);
+        if (result == -4) {
+            return ResponseEntity.status(404).body(new Result<Integer>(404, "组织编号不存在", null));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
 }

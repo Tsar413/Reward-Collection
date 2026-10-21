@@ -46,4 +46,44 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
         }
         return 1;
     }
+
+    @Override
+    public Integer updateOrg(SysOrgDTO sysOrgDTO, Long id) {
+        SysOrg sysOrg = baseMapper.selectById(id);
+        if(sysOrg == null){
+            return -4;
+        }
+        if(sysOrgDTO == null || sysOrgDTO.getOrgCode() == null || sysOrgDTO.getOrgName() == null){
+            return -2;
+        }
+        String orgCode = sysOrgDTO.getOrgCode().trim();
+        String orgName = sysOrgDTO.getOrgName().trim();
+        String remark = sysOrgDTO.getRemark() == null ? "" : sysOrgDTO.getRemark().trim();
+        if(orgCode.isBlank() || orgName.isBlank()){
+            return -2;
+        }
+        if(orgCode.length() > 50 || orgName.length() > 100 || remark.length() > 500){
+            return -3;
+        }
+        sysOrg.setOrgName(sysOrgDTO.getOrgName());
+        sysOrg.setRemark(sysOrgDTO.getRemark());
+        if(baseMapper.updateById(sysOrg) != 1){
+            throw new RuntimeException("修改失败");
+        }
+        return 1;
+    }
+
+    @Override
+    public Integer deleteOrg(Long id) {
+        SysOrg sysOrg = baseMapper.selectById(id);
+        if(sysOrg == null){
+            return -4;
+        }
+        // TODO 检查班级，用户，奖状是否存在组织
+
+        if(baseMapper.deleteById(id) != 1){
+            throw new RuntimeException("删除失败");
+        }
+        return 1;
+    }
 }

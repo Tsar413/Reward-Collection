@@ -53,20 +53,20 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
         if(sysOrg == null){
             return -4;
         }
-        if(sysOrgDTO == null || sysOrgDTO.getOrgCode() == null || sysOrgDTO.getOrgName() == null){
+        if(sysOrgDTO == null || sysOrgDTO.getOrgName() == null){
             return -2;
         }
-        String orgCode = sysOrgDTO.getOrgCode().trim();
         String orgName = sysOrgDTO.getOrgName().trim();
         String remark = sysOrgDTO.getRemark() == null ? "" : sysOrgDTO.getRemark().trim();
-        if(orgCode.isBlank() || orgName.isBlank()){
+        if(orgName.isBlank()){
             return -2;
         }
-        if(orgCode.length() > 50 || orgName.length() > 100 || remark.length() > 500){
+        if(orgName.length() > 100 || remark.length() > 500){
             return -3;
         }
-        sysOrg.setOrgName(sysOrgDTO.getOrgName());
-        sysOrg.setRemark(sysOrgDTO.getRemark());
+        sysOrg.setOrgName(orgName);
+        sysOrg.setRemark(remark);
+        sysOrg.setUpdateTime(LocalDateTime.now());
         if(baseMapper.updateById(sysOrg) != 1){
             throw new RuntimeException("修改失败");
         }

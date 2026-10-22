@@ -26,7 +26,7 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
 
     @Override
     public Integer addNewClass(SysClassDTO sysClassDTO) {
-        if(sysClassDTO == null || sysClassDTO.getOrgId() == null || sysClassDTO.getClassCode() == null || sysClassDTO.getClassName() == null || sysClassDTO.getRemark() == null || sysClassDTO.getAdmissionYear() == null || sysClassDTO.getTeacherUserId() == null){
+        if(sysClassDTO == null || sysClassDTO.getOrgId() == null || sysClassDTO.getClassCode() == null || sysClassDTO.getClassName() == null || sysClassDTO.getAdmissionYear() == null || sysClassDTO.getTeacherUserId() == null){
             return -2;
         }
         SysOrg org = sysOrgMapper.selectById(sysClassDTO.getOrgId());
@@ -37,9 +37,10 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
             return -5;
         }
         QueryWrapper<SysUser> wrapper2 = new QueryWrapper<SysUser>();
-        wrapper2.eq("id", sysClassDTO.getTeacherUserId());
-        wrapper2.eq("org_id", org.getId());
-        wrapper2.eq("role", "TEACHER");
+        wrapper2.eq("id", sysClassDTO.getTeacherUserId())
+                .eq("org_id", org.getId())
+                .eq("role", "TEACHER")
+                .eq("status", 1);
         SysUser teacher = sysUserMapper.selectOne(wrapper2);
         if(teacher == null){
             return -6;
@@ -49,6 +50,9 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
         String remark = sysClassDTO.getRemark() == null ? "" : sysClassDTO.getRemark().trim();
         if(classCode.length() > 50 || className.length() > 100 || remark.length() > 500 || sysClassDTO.getAdmissionYear() < 2020 || sysClassDTO.getAdmissionYear() > 3000){
             return -3;
+        }
+        if(classCode.isBlank() || className.isBlank()){
+            return -2;
         }
         QueryWrapper<SysClass> wrapper1 = new QueryWrapper<SysClass>();
         wrapper1.eq("org_id", sysClassDTO.getOrgId())

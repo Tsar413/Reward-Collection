@@ -17,20 +17,43 @@ public class SysClassController {
     @Resource
     private SysClassService service;
 
+    /**
+     * 查询全部班级
+     */
     @GetMapping("/all")
-    public ResponseEntity<Result<List<SysClass>>> getAllClasses(){
+    public ResponseEntity<Result<List<SysClass>>> getAllClasses() {
         return ResponseEntity.ok(Result.success(service.list()));
     }
 
+    /**
+     * 根据ID查询班级
+     */
     @GetMapping("/one/{id}")
-    public ResponseEntity<Result<SysClass>> getOneClass(@PathVariable Long id){
+    public ResponseEntity<Result<SysClass>> getOneClass(@PathVariable Long id) {
         return ResponseEntity.ok(Result.success(service.getById(id)));
     }
 
+    /**
+     * 新增班级
+     */
     @PostMapping("/add")
-    public ResponseEntity<Result<Integer>> addOneClass(@RequestBody SysClassDTO sysClassDTO){
+    public ResponseEntity<Result<Integer>> addOneClass(@RequestBody SysClassDTO sysClassDTO) {
         Integer result = service.addNewClass(sysClassDTO);
-
-        return null;
+        if (result == -2) {
+            return ResponseEntity.status(400).body(Result.badRequest("必填数据不完整"));
+        }
+        if (result == -3) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织不存在，或字段长度、入学年份不符合要求"));
+        }
+        if (result == -4) {
+            return ResponseEntity.status(409).body(new Result<Integer>(409, "该组织内班级编号已存在", null));
+        }
+        if (result == -5) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织已停用，无法新增班级"));
+        }
+        if (result == -6) {
+            return ResponseEntity.status(400).body(Result.badRequest("老师不存在"));
+        }
+        return ResponseEntity.ok(Result.success(result));
     }
 }

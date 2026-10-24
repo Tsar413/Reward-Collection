@@ -67,6 +67,9 @@ public class SysOrgController {
         if (result == -4) {
             return ResponseEntity.status(404).body(new Result<Integer>(404, "组织不存在", null));
         }
+        if (result == -3) {
+            return ResponseEntity.status(400).body(new Result<Integer>(400, "组织中存在用户", null));
+        }
         if (result == -2) {
             return ResponseEntity.status(400).body(new Result<Integer>(400, "组织中存在班级", null));
         }

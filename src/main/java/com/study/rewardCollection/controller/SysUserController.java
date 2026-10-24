@@ -3,6 +3,7 @@ package com.study.rewardCollection.controller;
 import com.study.rewardCollection.common.Result;
 import com.study.rewardCollection.dto.StudentImportResultDTO;
 import com.study.rewardCollection.dto.SysUserRegisterDTO;
+import com.study.rewardCollection.dto.SysUserUpdateDTO;
 import com.study.rewardCollection.service.SysUserService;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatus;
@@ -52,5 +53,39 @@ public class SysUserController {
         return ResponseEntity.ok(new Result<>(200, message, report));
     }
 
-    
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Result<Integer>> updateOneUser(@RequestBody SysUserUpdateDTO sysUserUpdateDTO, @PathVariable Long id){
+        Integer result = service.updateOneUser(sysUserUpdateDTO, id);
+        if (result == -2) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Result<>(400, "基本信息不能为空", null));
+        }
+        if (result == -3) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Result<>(400, "姓名、备注长度长度不符合要求, 状态不为0或1", null));
+        }
+        if (result == -4) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<>(404, "用户不存在", null));
+        }
+        if (result == -5) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<>(404, "组织不存在或已停用", null));
+        }
+        if (result != 1) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Result<>(500, "修改用户失败", null));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Result<Integer>> deleteOneUser(@PathVariable Long id){
+        Integer result = service.deleteOneUser(id);
+        if (result == -2) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Result<>(400, "老师与班级存在绑定", null));
+        }
+        if (result == -4) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<>(404, "用户不存在", null));
+        }
+        if (result != 1) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Result<>(500, "删除用户失败", null));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
 }

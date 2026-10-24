@@ -129,7 +129,11 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
         if(sysClass == null){
             return -4;
         }
-        // TODO 检查用户，奖状是否存在班级
+        Long userCount = sysUserMapper.selectCount(new QueryWrapper<SysUser>().eq("org_id", sysClass.getOrgId()).eq("role", "STUDENT"));
+        if(userCount > 0){
+            return -3;
+        }
+        // TODO 检查奖状是否存在班级
 
         if(baseMapper.deleteById(id) != 1){
             throw new RuntimeException("删除失败");

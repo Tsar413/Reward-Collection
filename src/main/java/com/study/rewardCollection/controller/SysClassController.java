@@ -88,6 +88,9 @@ public class SysClassController {
         if (result == -4) {
             return ResponseEntity.status(404).body(new Result<Integer>(404, "班级不存在", null));
         }
+        if (result == -3) {
+            return ResponseEntity.status(400).body(new Result<Integer>(400, "班级中存在学生", null));
+        }
         return ResponseEntity.ok(Result.success(result));
     }
 }

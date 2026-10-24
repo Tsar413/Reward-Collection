@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.study.rewardCollection.dto.StudentImportResultDTO;
 import com.study.rewardCollection.dto.SysUserRegisterDTO;
+import com.study.rewardCollection.dto.SysUserUpdateDTO;
 import com.study.rewardCollection.entity.SysClass;
 import com.study.rewardCollection.entity.SysOrg;
 import com.study.rewardCollection.entity.SysUser;
@@ -244,5 +245,72 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 report.getDetails().add(result);
             }
         }
+    }
+
+    @Override
+    public Integer updateOneUser(SysUserUpdateDTO sysUserUpdateDTO, Long id) {
+        SysUser sysUser = baseMapper.selectById(id);
+        if(sysUser == null){
+            return -4;
+        }
+        if(sysUserUpdateDTO == null || sysUserUpdateDTO.getRealName() == null || sysUserUpdateDTO.getStatus() == null){
+            return -2;
+        }
+        String realName = sysUserUpdateDTO.getRealName().trim();
+        String username = sysUserUpdateDTO.getRealName().trim();
+        Long classId = sysUserUpdateDTO.getClassId() == null ? null : sysUserUpdateDTO.getClassId();
+        String remark = sysUserUpdateDTO.getRemark() == null ? "" : sysUserUpdateDTO.getRemark().trim();
+        Integer status = sysUserUpdateDTO.getStatus();
+        if (realName.isBlank()) {
+            return -2;
+        }
+        if(realName.length() > 50 || remark.length() > 500){
+            return -3;
+        }
+        if(!Integer.valueOf(1).equals(status) && !Integer.valueOf(0).equals(status)){
+            return -3;
+        }
+        if("STUDENT".equals(sysUser.getRole())){
+            if(classId == null){
+                return -2;
+            }
+            Long classCount = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("org_id", sysUser.getOrgId()).eq("id", classId).eq("status", 1));
+            if(classCount != 1){
+                return -5;
+            }
+        }
+        sysUser.setUsername(username);
+        sysUser.setRealName(realName);
+        sysUser.setRemark(remark);
+        sysUser.setStatus(status);
+        if("STUDENT".equals(sysUser.getRole())){
+            sysUser.setClassId(classId);
+        } else {
+            sysUser.setClassId(null);
+        }
+        if(baseMapper.updateById(sysUser) != 1){
+            throw new RuntimeException("修改失败");
+        }
+        return 1;
+    }
+
+    @Override
+    public Integer deleteOneUser(Long id) {
+        SysUser sysUser = baseMapper.selectById(id);
+        if(sysUser == null){
+            return -4;
+        }
+        if("TEACHER".equals(sysUser.getRole())){
+            Long count = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("teacher_user_id", id));
+            if(count > 0){
+                return -2;
+            }
+        }
+        // TODO 检查奖状
+        // TODO 检查Token
+        if(baseMapper.deleteById(sysUser) != 1){
+            throw new RuntimeException("删除失败");
+        }
+        return 1;
     }
 }

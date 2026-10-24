@@ -127,6 +127,12 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ExcelImportException.class)
+    public ResponseEntity<Result<Void>> handleExcelImport(ExcelImportException e) {
+
+        return error(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
     /**
      * 保持HTTP状态码与响应体code一致。
      */

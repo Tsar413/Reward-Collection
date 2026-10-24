@@ -1,9 +1,11 @@
 package com.study.rewardCollection.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.study.rewardCollection.common.Result;
 import com.study.rewardCollection.dto.StudentImportResultDTO;
 import com.study.rewardCollection.dto.SysUserRegisterDTO;
 import com.study.rewardCollection.dto.SysUserUpdateDTO;
+import com.study.rewardCollection.entity.SysUser;
 import com.study.rewardCollection.service.SysUserService;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/sys-user")
@@ -87,5 +91,25 @@ public class SysUserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Result<>(500, "删除用户失败", null));
         }
         return ResponseEntity.ok(Result.success(result));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Result<List<SysUser>>> getAllUsers(){
+        return ResponseEntity.ok(Result.success(service.list()));
+    }
+
+    @GetMapping("/one/{id}")
+    public ResponseEntity<Result<SysUser>> getOneUser(@PathVariable Long id){
+        return ResponseEntity.ok(Result.success(service.getById(id)));
+    }
+
+    @GetMapping("/org/{orgId}")
+    public ResponseEntity<Result<List<SysUser>>> getByOrgId(@PathVariable Long orgId){
+        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysUser>().eq("org_id", orgId))));
+    }
+
+    @GetMapping("/class/{classId}")
+    public ResponseEntity<Result<List<SysUser>>> getByClassId(@PathVariable Long classId){
+        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysUser>().eq("class_id", classId))));
     }
 }

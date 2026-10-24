@@ -110,6 +110,6 @@ public class SysUserController {
 
     @GetMapping("/class/{classId}")
     public ResponseEntity<Result<List<SysUser>>> getByClassId(@PathVariable Long classId){
-        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysUser>().eq("class_id", classId))));
+        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysUser>().eq("class_id", classId).eq("role", "STUDENT"))));
     }
 }

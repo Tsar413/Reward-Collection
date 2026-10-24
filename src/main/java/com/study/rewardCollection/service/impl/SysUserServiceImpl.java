@@ -215,7 +215,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         String salt = PasswordUtil.generateSalt();
         user.setPasswordSalt(salt);
         user.setPasswordHash(
-                PasswordUtil.hashPassword("123456", salt)
+                PasswordUtil.hashPassword("12345678", salt)
         );
         user.setPasswordAlgorithm(PasswordUtil.ALGORITHM);
         if (baseMapper.insert(user) != 1) {

@@ -8,7 +8,7 @@ import com.study.rewardCollection.entity.SysClass;
 public interface SysClassService extends IService<SysClass> {
     Integer addNewClass(SysClassDTO sysClassDTO);
 
-    Integer updateNoeClass(SysClassUpdateDTO sysClassUpdateDTO, Long id);
+    Integer updateClass(SysClassUpdateDTO sysClassUpdateDTO, Long id);
 
     Integer deleteOneClass(Long id);
 }

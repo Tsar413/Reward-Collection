@@ -80,7 +80,7 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
     }
 
     @Override
-    public Integer updateNoeClass(SysClassUpdateDTO sysClassUpdateDTO, Long id) {
+    public Integer updateClass(SysClassUpdateDTO sysClassUpdateDTO, Long id) {
         SysClass sysClass = baseMapper.selectById(id);
         if(sysClass == null){
             return -4;
@@ -96,7 +96,7 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
         if(className.isBlank()){
             return -2;
         }
-        if(className.length() > 100 || remark.length() > 500 || admissionYear.compareTo(2000) < 0 ||  admissionYear.compareTo(3000) > 0 || (!Integer.valueOf(1).equals(status) && !Integer.valueOf(0).equals(status))){
+        if(className.length() > 100 || remark.length() > 500 || admissionYear.compareTo(2020) < 0 ||  admissionYear.compareTo(3000) > 0 || (!Integer.valueOf(1).equals(status) && !Integer.valueOf(0).equals(status))){
             return -3;
         }
         QueryWrapper<SysUser> wrapper2 = new QueryWrapper<SysUser>();
@@ -105,11 +105,15 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
                 .eq("role", "TEACHER")
                 .eq("status", 1);
         SysUser teacher = sysUserMapper.selectOne(wrapper2);
-        if(teacher == null){
-            return -6;
+        if (!teacherUserId.equals(sysClass.getTeacherUserId())) {
+            // 原来的教师查询与校验代码
+             if(teacher == null){
+                 return -6;
+             }
         }
         sysClass.setClassName(className);
         sysClass.setAdmissionYear(admissionYear);
+        sysClass.setTeacherUserId(teacherUserId);
         sysClass.setStatus(status);
         sysClass.setRemark(remark);
         sysClass.setUpdateTime(LocalDateTime.now());

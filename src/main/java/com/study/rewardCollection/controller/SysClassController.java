@@ -66,7 +66,7 @@ public class SysClassController {
 
     @PutMapping("/update/{id}")
     public ResponseEntity<Result<Integer>> updateOneClass(@RequestBody SysClassUpdateDTO sysClassUpdateDTO, @PathVariable Long id){
-        Integer result = service.updateNoeClass(sysClassUpdateDTO, id);
+        Integer result = service.updateClass(sysClassUpdateDTO, id);
         if (result == -2) {
             return ResponseEntity.status(400).body(Result.badRequest("必填数据不完整"));
         }

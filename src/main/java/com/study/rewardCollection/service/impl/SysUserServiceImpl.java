@@ -38,14 +38,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         Long classId = sysUserRegisterDTO.getClassId() == null ? null : sysUserRegisterDTO.getClassId();
         String userNo = sysUserRegisterDTO.getUserNo().trim();
         String remark = sysUserRegisterDTO.getRemark() == null ? "" : sysUserRegisterDTO.getRemark().trim();
+        if (realName.isBlank() || userNo.isBlank() || role.isBlank()) {
+            return -2;
+        }
         if(realName.length() > 50 || (password.length() < 8 || password.length() > 64) || userNo.length() > 50 || remark.length() > 500){
             return -3;
         }
-        if("TEACHER".equals(role) || "ADMIN".equals(role) || "STUDENT".equals(role)){
+        if(!"TEACHER".equals(role) && !"ADMIN".equals(role) && !"STUDENT".equals(role)){
             return -4;
         }
         // 检查组织是否存在
-        Long orgCount = sysOrgMapper.selectCount(new QueryWrapper<SysOrg>().eq("org_id", orgId).eq("status", 1));
+        Long orgCount = sysOrgMapper.selectCount(new QueryWrapper<SysOrg>().eq("id", orgId).eq("status", 1));
         if(orgCount != 1){
             return -5;
         }
@@ -54,8 +57,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if(userCount != 0){
             return -6;
         }
+        if(classId == null && "STUDENT".equals(role)){
+            return -2;
+        }
         // 检查班级是否存在
-        if(classId != null){
+        if(classId != null && "STUDENT".equals(role)){
             Long classCount = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("org_id", orgId).eq("id", classId).eq("status", 1));
             if(classCount != 1){
                 return -7;
@@ -64,17 +70,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUser sysUser = new SysUser();
         sysUser.setUserNo(userNo);
         sysUser.setRemark(remark);
-        sysUser.setClassId(classId);
         sysUser.setStatus(1);
         sysUser.setOrgId(orgId);
         sysUser.setRealName(realName);
         sysUser.setRole(role);
+        if("TEACHER".equals(role) || "ADMIN".equals(role)){
+            sysUser.setClassId(null);
+        } else {
+            sysUser.setClassId(classId);
+        }
         sysUser.setLastLoginTime(null);
         sysUser.setUsername(username);
         String salt = PasswordUtil.generateSalt();
         sysUser.setPasswordSalt(salt);
-        sysUser.setPasswordHash(PasswordUtil.hashPassword("123456", salt));
-        sysUser.setPasswordAlgorithm("SHA-256");
+        sysUser.setPasswordHash(PasswordUtil.hashPassword(password, salt));
+        sysUser.setPasswordAlgorithm(PasswordUtil.ALGORITHM);
         LocalDateTime time = LocalDateTime.now();
         sysUser.setUpdateTime(time);
         sysUser.setCreateTime(time);

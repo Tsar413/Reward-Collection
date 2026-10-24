@@ -129,7 +129,7 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
         if(sysClass == null){
             return -4;
         }
-        Long userCount = sysUserMapper.selectCount(new QueryWrapper<SysUser>().eq("org_id", sysClass.getOrgId()).eq("role", "STUDENT"));
+        Long userCount = sysUserMapper.selectCount(new QueryWrapper<SysUser>().eq("org_id", sysClass.getOrgId()).eq("class_id", id).eq("role", "STUDENT"));
         if(userCount > 0){
             return -3;
         }

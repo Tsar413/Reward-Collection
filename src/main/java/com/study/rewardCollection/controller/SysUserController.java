@@ -66,7 +66,7 @@ public class SysUserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<>(404, "用户不存在", null));
         }
         if (result == -5) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<>(404, "组织不存在或已停用", null));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<>(404, "班级不存在、已停用或不属于该组织", null));
         }
         if (result != 1) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Result<>(500, "修改用户失败", null));

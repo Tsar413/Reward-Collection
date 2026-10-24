@@ -274,15 +274,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             if(classId == null){
                 return -2;
             }
-            Long classCount = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("org_id", sysUser.getOrgId()).eq("id", classId).eq("status", 1));
-            if(classCount != 1){
-                return -5;
+            if (!classId.equals(sysUser.getClassId())) {
+                Long classCount = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("org_id", sysUser.getOrgId()).eq("id", classId).eq("status", 1));
+                if(classCount != 1){
+                    return -5;
+                }
             }
         }
         sysUser.setUsername(username);
         sysUser.setRealName(realName);
         sysUser.setRemark(remark);
         sysUser.setStatus(status);
+        sysUser.setUpdateTime(LocalDateTime.now());
         if("STUDENT".equals(sysUser.getRole())){
             sysUser.setClassId(classId);
         } else {

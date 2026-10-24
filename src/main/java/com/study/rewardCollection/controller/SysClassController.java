@@ -1,7 +1,9 @@
 package com.study.rewardCollection.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.study.rewardCollection.common.Result;
 import com.study.rewardCollection.dto.SysClassDTO;
+import com.study.rewardCollection.dto.SysClassUpdateDTO;
 import com.study.rewardCollection.entity.SysClass;
 import com.study.rewardCollection.service.SysClassService;
 import jakarta.annotation.Resource;
@@ -23,6 +25,11 @@ public class SysClassController {
     @GetMapping("/all")
     public ResponseEntity<Result<List<SysClass>>> getAllClasses() {
         return ResponseEntity.ok(Result.success(service.list()));
+    }
+
+    @GetMapping("/all/{orgId}")
+    public ResponseEntity<Result<List<SysClass>>> getClassesByOrgId(@PathVariable Long orgId){
+        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysClass>().eq("org_id", orgId))));
     }
 
     /**
@@ -52,7 +59,34 @@ public class SysClassController {
             return ResponseEntity.status(400).body(Result.badRequest("组织已停用，无法新增班级"));
         }
         if (result == -6) {
-            return ResponseEntity.status(400).body(Result.badRequest("老师不存在"));
+            return ResponseEntity.status(400).body(Result.badRequest("教师不存在、已停用或不属于该组织"));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Result<Integer>> updateOneClass(@RequestBody SysClassUpdateDTO sysClassUpdateDTO, @PathVariable Long id){
+        Integer result = service.updateNoeClass(sysClassUpdateDTO, id);
+        if (result == -2) {
+            return ResponseEntity.status(400).body(Result.badRequest("必填数据不完整"));
+        }
+        if (result == -3) {
+            return ResponseEntity.status(400).body(Result.badRequest("名称、备注、入学年份或状态不符合要求"));
+        }
+        if (result == -4) {
+            return ResponseEntity.status(404).body(new Result<Integer>(404, "班级不存在", null));
+        }
+        if (result == -6) {
+            return ResponseEntity.status(400).body(Result.badRequest("教师不存在、已停用或不属于该组织"));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Result<Integer>> deleteOneClass(@PathVariable Long id){
+        Integer result = service.deleteOneClass(id);
+        if (result == -4) {
+            return ResponseEntity.status(404).body(new Result<Integer>(404, "班级不存在", null));
         }
         return ResponseEntity.ok(Result.success(result));
     }

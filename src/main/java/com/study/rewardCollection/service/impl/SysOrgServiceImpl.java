@@ -3,15 +3,21 @@ package com.study.rewardCollection.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.study.rewardCollection.dto.SysOrgDTO;
+import com.study.rewardCollection.entity.SysClass;
 import com.study.rewardCollection.entity.SysOrg;
+import com.study.rewardCollection.mapper.SysClassMapper;
 import com.study.rewardCollection.mapper.SysOrgMapper;
 import com.study.rewardCollection.service.SysOrgService;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
 public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> implements SysOrgService {
+
+    @Resource
+    private SysClassMapper sysClassMapper;
 
     @Override
     public Integer addNewOrg(SysOrgDTO sysOrgDTO) {
@@ -79,7 +85,11 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
         if(sysOrg == null){
             return -4;
         }
-        // TODO 检查班级，用户，奖状是否存在组织
+        Long classOrgCount = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("org_id", sysOrg.getId()));
+        if(classOrgCount > 0){
+            return -2;
+        }
+        // TODO 检查用户，奖状是否存在组织
 
         if(baseMapper.deleteById(id) != 1){
             throw new RuntimeException("删除失败");

@@ -40,9 +40,9 @@ public class SysUser {
     @Column(length = 20)
     private String role;
 
-    @Column(name = "student_no", length = 50)
-    @TableField("student_no")
-    private String studentNo;
+    @Column(name = "user_no", length = 50)
+    @TableField("user_no")
+    private String userNo;
 
     @JsonIgnore
     @ToString.Exclude

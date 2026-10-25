@@ -44,24 +44,30 @@ public class DataScopeService {
      * 用户查询范围。
      */
     public QueryWrapper<SysUser> userQuery() {
+
         SysUser me = currentUser();
         QueryWrapper<SysUser> query = new QueryWrapper<>();
-        query.eq("org_id", me.getOrgId());
+
         if (isAdmin(me)) {
             return query;
         }
+
+        query.eq("org_id", me.getOrgId());
+
         if (isTeacher(me)) {
             List<Long> classIds = teacherClassIds(me);
+
             if (classIds.isEmpty()) {
                 query.eq("id", me.getId());
             } else {
-                // 本人 OR 所负责班级的学生。
                 query.and(w -> w.eq("id", me.getId())
                         .or(s -> s.eq("role", "STUDENT")
                                 .in("class_id", classIds)));
             }
+
             return query;
         }
+
         return query.eq("id", me.getId());
     }
 
@@ -69,24 +75,39 @@ public class DataScopeService {
      * 班级查询范围。
      */
     public QueryWrapper<SysClass> classQuery() {
+
         SysUser me = currentUser();
         QueryWrapper<SysClass> query = new QueryWrapper<>();
-        query.eq("org_id", me.getOrgId());
+
         if (isAdmin(me)) {
             return query;
         }
+
+        query.eq("org_id", me.getOrgId());
+
         if (isTeacher(me)) {
             return query.eq("teacher_user_id", me.getId());
         }
-        // 学生没有班级时返回空结果。
-        return query.eq("id", me.getClassId() == null ? -1L : me.getClassId());
+
+        return query.eq(
+                "id",
+                me.getClassId() == null ? -1L : me.getClassId()
+        );
     }
 
     /**
      * 组织查询范围。
      */
     public QueryWrapper<SysOrg> orgQuery() {
-        return new QueryWrapper<SysOrg>().eq("id", currentUser().getOrgId());
+
+        SysUser me = currentUser();
+        QueryWrapper<SysOrg> query = new QueryWrapper<>();
+
+        if (isAdmin(me)) {
+            return query;
+        }
+
+        return query.eq("id", me.getOrgId());
     }
 
     /**
@@ -120,11 +141,26 @@ public class DataScopeService {
      * Excel每行解析出班级后检查。
      */
     public boolean canImportClass(SysClass sysClass) {
+
         SysUser me = currentUser();
-        if (sysClass == null || !Objects.equals(me.getOrgId(), sysClass.getOrgId())) {
+
+        if (sysClass == null) {
             return false;
         }
-        return isAdmin(me) || (isTeacher(me) && Objects.equals(me.getId(), sysClass.getTeacherUserId()));
+
+        if (isAdmin(me)) {
+            return true;
+        }
+
+        if (!Objects.equals(me.getOrgId(), sysClass.getOrgId())) {
+            return false;
+        }
+
+        return isTeacher(me)
+                && Objects.equals(
+                me.getId(),
+                sysClass.getTeacherUserId()
+        );
     }
 
     /**
@@ -230,6 +266,11 @@ public class DataScopeService {
     }
 
     private void checkSameOrg(SysUser me, Long orgId) {
+
+        if (isAdmin(me)) {
+            return;
+        }
+
         if (!Objects.equals(me.getOrgId(), orgId)) {
             throw forbidden("不能操作其他组织的数据");
         }

@@ -9,6 +9,7 @@ import com.study.rewardCollection.entity.SysUser;
 import com.study.rewardCollection.mapper.SysClassMapper;
 import com.study.rewardCollection.mapper.SysOrgMapper;
 import com.study.rewardCollection.mapper.SysUserMapper;
+import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.SysOrgService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -24,8 +25,12 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
     @Resource
     private SysUserMapper sysUserMapper;
 
+    @Resource
+    private DataScopeService dataScope;
+
     @Override
     public Integer addNewOrg(SysOrgDTO sysOrgDTO) {
+        dataScope.checkOrgCreate();
         if(sysOrgDTO == null || sysOrgDTO.getOrgCode() == null || sysOrgDTO.getOrgName() == null){
             return -2;
         }
@@ -64,6 +69,7 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
         if(sysOrg == null){
             return -4;
         }
+        dataScope.checkOrgWrite(sysOrg.getId());
         if(sysOrgDTO == null || sysOrgDTO.getOrgName() == null){
             return -2;
         }
@@ -90,6 +96,7 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
         if(sysOrg == null){
             return -4;
         }
+        dataScope.checkOrgWrite(sysOrg.getId());
         Long classOrgCount = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("org_id", sysOrg.getId()));
         if(classOrgCount > 0){
             return -2;

@@ -5,6 +5,7 @@ import com.study.rewardCollection.common.Result;
 import com.study.rewardCollection.dto.SysClassDTO;
 import com.study.rewardCollection.dto.SysClassUpdateDTO;
 import com.study.rewardCollection.entity.SysClass;
+import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.SysClassService;
 import jakarta.annotation.Resource;
 import org.springframework.http.ResponseEntity;
@@ -19,25 +20,22 @@ public class SysClassController {
     @Resource
     private SysClassService service;
 
-    /**
-     * 查询全部班级
-     */
+    @Resource
+    private DataScopeService dataScope;
+
     @GetMapping("/all")
     public ResponseEntity<Result<List<SysClass>>> getAllClasses() {
-        return ResponseEntity.ok(Result.success(service.list()));
+        return ResponseEntity.ok(Result.success(service.list(dataScope.classQuery())));
     }
 
     @GetMapping("/all/{orgId}")
-    public ResponseEntity<Result<List<SysClass>>> getClassesByOrgId(@PathVariable Long orgId){
-        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysClass>().eq("org_id", orgId))));
+    public ResponseEntity<Result<List<SysClass>>> getClassesByOrgId(@PathVariable Long orgId) {
+        return ResponseEntity.ok(Result.success(service.list(dataScope.classQuery().eq("org_id", orgId))));
     }
 
-    /**
-     * 根据ID查询班级
-     */
     @GetMapping("/one/{id}")
     public ResponseEntity<Result<SysClass>> getOneClass(@PathVariable Long id) {
-        return ResponseEntity.ok(Result.success(service.getById(id)));
+        return ResponseEntity.ok(Result.success(service.getOne(dataScope.classQuery().eq("id", id))));
     }
 
     /**

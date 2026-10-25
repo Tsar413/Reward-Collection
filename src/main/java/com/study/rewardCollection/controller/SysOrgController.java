@@ -3,6 +3,7 @@ package com.study.rewardCollection.controller;
 import com.study.rewardCollection.common.Result;
 import com.study.rewardCollection.dto.SysOrgDTO;
 import com.study.rewardCollection.entity.SysOrg;
+import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.SysOrgService;
 import jakarta.annotation.Resource;
 import org.springframework.http.ResponseEntity;
@@ -17,18 +18,21 @@ public class SysOrgController {
     @Resource
     private SysOrgService service;
 
+    @Resource
+    private DataScopeService dataScope;
+
     @GetMapping("/all")
-    public ResponseEntity<Result<List<SysOrg>>> getAllOrg(){
-        return ResponseEntity.ok(Result.success(service.list()));
+    public ResponseEntity<Result<List<SysOrg>>> getAllOrg() {
+        return ResponseEntity.ok(Result.success(service.list(dataScope.orgQuery())));
     }
 
     @GetMapping("/one/{id}")
-    public ResponseEntity<Result<SysOrg>> getOneOrg(@PathVariable Long id){
-        SysOrg sysOrg = service.getById(id);
-        if (sysOrg == null) {
-            return ResponseEntity.status(404).body(new Result<SysOrg>(404, "组织不存在", null));
+    public ResponseEntity<Result<SysOrg>> getOneOrg(@PathVariable Long id) {
+        SysOrg org = service.getOne(dataScope.orgQuery().eq("id", id));
+        if (org == null) {
+            return ResponseEntity.status(404).body(new Result<>(404, "组织不存在", null));
         }
-        return ResponseEntity.ok(Result.success(sysOrg));
+        return ResponseEntity.ok(Result.success(org));
     }
 
     @PostMapping("/add")

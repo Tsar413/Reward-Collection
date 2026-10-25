@@ -6,6 +6,7 @@ import com.study.rewardCollection.dto.StudentImportResultDTO;
 import com.study.rewardCollection.dto.SysUserRegisterDTO;
 import com.study.rewardCollection.dto.SysUserUpdateDTO;
 import com.study.rewardCollection.entity.SysUser;
+import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.SysUserService;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,9 @@ import java.util.List;
 public class SysUserController {
     @Resource
     private SysUserService service;
+
+    @Resource
+    private DataScopeService dataScope;
 
     @PostMapping("/registration-one")
     public ResponseEntity<Result<Integer>> registrationOne(@RequestBody SysUserRegisterDTO sysUserRegisterDTO){
@@ -94,22 +98,22 @@ public class SysUserController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<Result<List<SysUser>>> getAllUsers(){
-        return ResponseEntity.ok(Result.success(service.list()));
+    public ResponseEntity<Result<List<SysUser>>> getAllUsers() {
+        return ResponseEntity.ok(Result.success(service.list(dataScope.userQuery())));
     }
 
     @GetMapping("/one/{id}")
-    public ResponseEntity<Result<SysUser>> getOneUser(@PathVariable Long id){
-        return ResponseEntity.ok(Result.success(service.getById(id)));
+    public ResponseEntity<Result<SysUser>> getOneUser(@PathVariable Long id) {
+        return ResponseEntity.ok(Result.success(service.getOne(dataScope.userQuery().eq("id", id))));
     }
 
     @GetMapping("/org/{orgId}")
-    public ResponseEntity<Result<List<SysUser>>> getByOrgId(@PathVariable Long orgId){
-        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysUser>().eq("org_id", orgId))));
+    public ResponseEntity<Result<List<SysUser>>> getByOrgId(@PathVariable Long orgId) {
+        return ResponseEntity.ok(Result.success(service.list(dataScope.userQuery().eq("org_id", orgId))));
     }
 
     @GetMapping("/class/{classId}")
-    public ResponseEntity<Result<List<SysUser>>> getByClassId(@PathVariable Long classId){
-        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<SysUser>().eq("class_id", classId).eq("role", "STUDENT"))));
+    public ResponseEntity<Result<List<SysUser>>> getByClassId(@PathVariable Long classId) {
+        return ResponseEntity.ok(Result.success(service.list(dataScope.userQuery().eq("class_id", classId).eq("role", "STUDENT"))));
     }
 }

@@ -10,6 +10,7 @@ import com.study.rewardCollection.entity.SysUser;
 import com.study.rewardCollection.mapper.SysClassMapper;
 import com.study.rewardCollection.mapper.SysOrgMapper;
 import com.study.rewardCollection.mapper.SysUserMapper;
+import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.SysClassService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -25,11 +26,15 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
     @Resource
     private SysUserMapper sysUserMapper;
 
+    @Resource
+    private DataScopeService dataScope;
+
     @Override
     public Integer addNewClass(SysClassDTO sysClassDTO) {
         if(sysClassDTO == null || sysClassDTO.getOrgId() == null || sysClassDTO.getClassCode() == null || sysClassDTO.getClassName() == null || sysClassDTO.getAdmissionYear() == null || sysClassDTO.getTeacherUserId() == null){
             return -2;
         }
+        dataScope.checkCreateClass(sysClassDTO.getOrgId());
         SysOrg org = sysOrgMapper.selectById(sysClassDTO.getOrgId());
         if(org == null){
             return -3;
@@ -88,6 +93,7 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
         if(sysClassUpdateDTO == null || sysClassUpdateDTO.getClassName() == null || sysClassUpdateDTO.getAdmissionYear() == null || sysClassUpdateDTO.getTeacherUserId() == null || sysClassUpdateDTO.getStatus() == null){
             return -2;
         }
+        dataScope.checkClassWrite(sysClass);
         String className = sysClassUpdateDTO.getClassName().trim();
         Integer admissionYear = sysClassUpdateDTO.getAdmissionYear();
         Long teacherUserId = sysClassUpdateDTO.getTeacherUserId();
@@ -129,6 +135,7 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
         if(sysClass == null){
             return -4;
         }
+        dataScope.checkClassWrite(sysClass);
         Long userCount = sysUserMapper.selectCount(new QueryWrapper<SysUser>().eq("org_id", sysClass.getOrgId()).eq("class_id", id).eq("role", "STUDENT"));
         if(userCount > 0){
             return -3;

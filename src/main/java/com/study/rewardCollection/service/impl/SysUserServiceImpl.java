@@ -12,6 +12,7 @@ import com.study.rewardCollection.exception.ExcelImportException;
 import com.study.rewardCollection.mapper.SysClassMapper;
 import com.study.rewardCollection.mapper.SysOrgMapper;
 import com.study.rewardCollection.mapper.SysUserMapper;
+import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.SysUserService;
 import com.study.rewardCollection.util.PasswordUtil;
 import com.study.rewardCollection.util.StudentExcelUtil;
@@ -39,11 +40,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Resource
     private PlatformTransactionManager transactionManager;
 
+    @Resource
+    private DataScopeService dataScope;
+
     @Override
     public Integer registrationOne(SysUserRegisterDTO sysUserRegisterDTO) {
         if(sysUserRegisterDTO == null || sysUserRegisterDTO.getOrgId() == null || sysUserRegisterDTO.getRealName() == null || sysUserRegisterDTO.getPassword() == null || sysUserRegisterDTO.getRole() == null || sysUserRegisterDTO.getUserNo() == null){
             return -2;
         }
+        dataScope.checkCreateUser(sysUserRegisterDTO);
         Long orgId = sysUserRegisterDTO.getOrgId();
         String realName = sysUserRegisterDTO.getRealName().trim();
         String username = sysUserRegisterDTO.getRealName().trim();
@@ -117,6 +122,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (org == null || !Integer.valueOf(1).equals(org.getStatus())) {
             throw new ExcelImportException("组织不存在或已停用");
         }
+        dataScope.checkImport(orgId);
         // 先读取、检查整个文件，再开始写入数据库
         List<StudentExcelUtil.StudentRow> rows = StudentExcelUtil.readStudents(file);
         StudentImportResultDTO report = new StudentImportResultDTO();
@@ -158,30 +164,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return report;
     }
 
-    /**
-     * 在独立事务中处理一名学生。
-     */
-    private StudentImportResultDTO.RowResult importOneStudent(Long orgId, StudentExcelUtil.StudentRow row) {
-        // 所有角色的编号都参加查重，包括停用账号
-        Long userCount = baseMapper.selectCount(
-                new QueryWrapper<SysUser>()
-                        .eq("org_id", orgId)
-                        .eq("user_no", row.userNo())
-        );
-        if (userCount > 0) {
-            return new StudentImportResultDTO.RowResult(
-                    row.rowNumber(),
-                    row.userNo(),
-                    "SKIPPED",
-                    "用户编号已存在，未修改已有账号"
-            );
-        }
-        // Excel中填写的是班级编号，不是数据库主键ID
+    private StudentImportResultDTO.RowResult importOneStudent(
+            Long orgId, StudentExcelUtil.StudentRow row) {
+
         SysClass sysClass = sysClassMapper.selectOne(
                 new QueryWrapper<SysClass>()
                         .eq("org_id", orgId)
                         .eq("class_code", row.classCode())
         );
+
         if (sysClass == null) {
             return new StudentImportResultDTO.RowResult(
                     row.rowNumber(),
@@ -190,6 +181,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                     "当前组织中不存在班级：" + row.classCode()
             );
         }
+
+        if (!dataScope.canImportClass(sysClass)) {
+            return new StudentImportResultDTO.RowResult(
+                    row.rowNumber(),
+                    row.userNo(),
+                    "FAILED",
+                    "没有该班级的导入权限"
+            );
+        }
+
         if (!Integer.valueOf(1).equals(sysClass.getStatus())) {
             return new StudentImportResultDTO.RowResult(
                     row.rowNumber(),
@@ -198,7 +199,24 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                     "班级已停用：" + row.classCode()
             );
         }
+
+        Long userCount = baseMapper.selectCount(
+                new QueryWrapper<SysUser>()
+                        .eq("org_id", orgId)
+                        .eq("user_no", row.userNo())
+        );
+
+        if (userCount > 0) {
+            return new StudentImportResultDTO.RowResult(
+                    row.rowNumber(),
+                    row.userNo(),
+                    "SKIPPED",
+                    "用户编号已存在，未修改已有账号"
+            );
+        }
+
         LocalDateTime now = LocalDateTime.now();
+
         SysUser user = new SysUser();
         user.setOrgId(orgId);
         user.setUserNo(row.userNo());
@@ -211,16 +229,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setLastLoginTime(null);
         user.setCreateTime(now);
         user.setUpdateTime(now);
-        // 密码相同，但每人使用独立随机盐
+
         String salt = PasswordUtil.generateSalt();
         user.setPasswordSalt(salt);
         user.setPasswordHash(
                 PasswordUtil.hashPassword("12345678", salt)
         );
         user.setPasswordAlgorithm(PasswordUtil.ALGORITHM);
+
         if (baseMapper.insert(user) != 1) {
             throw new IllegalStateException("创建学生失败");
         }
+
         return new StudentImportResultDTO.RowResult(
                 row.rowNumber(),
                 row.userNo(),
@@ -256,6 +276,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if(sysUserUpdateDTO == null || sysUserUpdateDTO.getRealName() == null || sysUserUpdateDTO.getStatus() == null){
             return -2;
         }
+        dataScope.checkUpdateUser(sysUser, sysUserUpdateDTO);
         String realName = sysUserUpdateDTO.getRealName().trim();
         String username = sysUserUpdateDTO.getRealName().trim();
         Long classId = sysUserUpdateDTO.getClassId() == null ? null : sysUserUpdateDTO.getClassId();
@@ -303,6 +324,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if(sysUser == null){
             return -4;
         }
+        dataScope.checkDeleteUser(sysUser);
         if("TEACHER".equals(sysUser.getRole())){
             Long count = sysClassMapper.selectCount(new QueryWrapper<SysClass>().eq("teacher_user_id", id));
             if(count > 0){

@@ -17,13 +17,25 @@ public class SysLoginController {
     private SysLoginService service;
 
     @PostMapping("/login")
-    public ResponseEntity<Result<SysUserLoginResultDTO>> login(@RequestBody SysUserLoginDTO sysUserLoginDTO){
-        SysUserLoginResultDTO result = service.login(sysUserLoginDTO);
-        if(result == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Result<>(400, "用户名与密码组合错误或用户不存在/已停用或token生成失败", null));
+    public ResponseEntity<Result<SysUserLoginResultDTO>> login(@RequestBody SysUserLoginDTO dto) {
+        SysUserLoginResultDTO result = service.login(dto);
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Result<>(401, "用户编号或密码错误，或账号及组织已停用", null));
         }
         return ResponseEntity.ok(Result.success(result));
     }
 
-    
+    /**
+     * 能进入此方法，说明Filter已校验通过。
+     */
+    @GetMapping("/check")
+    public ResponseEntity<Result<Integer>> check() {
+        return ResponseEntity.ok(Result.success(1));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Result<Integer>> logout(@RequestAttribute("loginToken") String token) {
+        service.logout(token);
+        return ResponseEntity.ok(Result.success(1));
+    }
 }

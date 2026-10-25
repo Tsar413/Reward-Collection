@@ -133,6 +133,13 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Result<Void>> handleResponseStatus(ResponseStatusException e) {
+        int code = e.getStatusCode().value();
+        String message = e.getReason() == null ? "请求处理失败" : e.getReason();
+        return ResponseEntity.status(code).body(new Result<Void>(code, message, null));
+    }
+
     /**
      * 保持HTTP状态码与响应体code一致。
      */

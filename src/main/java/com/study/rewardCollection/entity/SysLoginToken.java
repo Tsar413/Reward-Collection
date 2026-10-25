@@ -1,9 +1,6 @@
 package com.study.rewardCollection.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -39,7 +36,7 @@ public class SysLoginToken {
 
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(columnDefinition = "DATETIME", name = "revoke_time")
-    @TableField(value = "revoke_time")
+    @TableField(value = "revoke_time", updateStrategy = FieldStrategy.ALWAYS)
     private LocalDateTime revokeTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

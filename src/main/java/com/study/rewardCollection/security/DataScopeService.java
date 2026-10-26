@@ -3,6 +3,7 @@ package com.study.rewardCollection.security;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.study.rewardCollection.dto.SysUserRegisterDTO;
 import com.study.rewardCollection.dto.SysUserUpdateDTO;
+import com.study.rewardCollection.entity.AwardRecord;
 import com.study.rewardCollection.entity.SysClass;
 import com.study.rewardCollection.entity.SysOrg;
 import com.study.rewardCollection.entity.SysUser;
@@ -286,5 +287,115 @@ public class DataScopeService {
 
     private ResponseStatusException forbidden(String message) {
         return new ResponseStatusException(HttpStatus.FORBIDDEN, message);
+    }
+
+    /**
+     * 新增奖状的权限与归属检查。
+     * student：个人奖状的获奖学生；班级奖状传 null。
+     * targetClass：奖状所属班级。
+     */
+    public void checkCreateAward(
+            String awardType,
+            SysUser student,
+            SysClass targetClass
+    ) {
+        SysUser me = currentUser();
+
+        if (targetClass == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "奖状所属班级不存在"
+            );
+        }
+
+        if (!"PERSONAL".equals(awardType) && !"CLASS".equals(awardType)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "奖状类型错误"
+            );
+        }
+
+        // ADMIN 可以跨组织；其他角色只能操作本组织。
+        checkSameOrg(me, targetClass.getOrgId());
+
+        if ("CLASS".equals(awardType)) {
+            if (isAdmin(me)) {
+                return;
+            }
+
+            if (isTeacher(me)) {
+                checkTeacherClass(me, targetClass.getId());
+                return;
+            }
+
+            throw forbidden("学生不能上传班级奖状");
+        }
+
+        // 个人奖状必须归属于学生。
+        if (student == null || !"STUDENT".equals(student.getRole())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "获奖用户必须是学生"
+            );
+        }
+
+        if (!Objects.equals(student.getClassId(), targetClass.getId())
+                || !Objects.equals(student.getOrgId(), targetClass.getOrgId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "学生与班级的归属不一致"
+            );
+        }
+
+        if (isAdmin(me)) {
+            return;
+        }
+
+        if (isTeacher(me)) {
+            checkTeacherClass(me, targetClass.getId());
+            return;
+        }
+
+        if (!Objects.equals(me.getId(), student.getId())) {
+            throw forbidden("只能上传自己的个人奖状");
+        }
+    }
+
+    /**
+     * 奖状查询范围。
+     */
+    public QueryWrapper<AwardRecord> awardQuery() {
+        SysUser me = currentUser();
+        QueryWrapper<AwardRecord> query = new QueryWrapper<>();
+
+        // 管理员可以查询各组织奖状。
+        if (isAdmin(me)) {
+            return query;
+        }
+
+        query.eq("org_id", me.getOrgId());
+
+        // 教师可以查询自己负责班级内的个人奖状、班级奖状。
+        if (isTeacher(me)) {
+            List<Long> classIds = teacherClassIds(me);
+
+            if (classIds.isEmpty()) {
+                return query.eq("id", -1L);
+            }
+
+            return query.in("class_id", classIds);
+        }
+
+        // 没有所属班级时，只查询自己的个人奖状。
+        if (me.getClassId() == null) {
+            return query.eq("award_type", "PERSONAL")
+                    .eq("student_user_id", me.getId());
+        }
+
+        // 学生：自己的个人奖状，或当前班级的班级奖状。
+        return query.and(w -> w
+                .eq("award_type", "PERSONAL")
+                .eq("student_user_id", me.getId())
+                .or(c -> c
+                        .eq("award_type", "CLASS")
+                        .eq("class_id", me.getClassId())
+                )
+        );
     }
 }

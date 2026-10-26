@@ -30,56 +30,81 @@ public class AwardRecordServiceImpl extends ServiceImpl<AwardRecordMapper, Award
 
     @Override
     public Integer addAwardRecord(AwardRecordAddDTO recordAddDTO) {
-        if(recordAddDTO == null || recordAddDTO.getAwardType() == null || recordAddDTO.getClassId() == null || recordAddDTO.getAwardName() == null || recordAddDTO.getIssuingOrganization() == null || recordAddDTO.getAwardDate() == null){
+        if (recordAddDTO == null || recordAddDTO.getAwardType() == null || recordAddDTO.getAwardName() == null || recordAddDTO.getIssuingOrganization() == null || recordAddDTO.getAwardDate() == null) {
             return -2;
         }
         String awardType = recordAddDTO.getAwardType().trim();
-        Long studentUserId = recordAddDTO.getStudentUserId();
-        Long classId = recordAddDTO.getClassId();
         String awardName = recordAddDTO.getAwardName().trim();
+        String issuingOrganization = recordAddDTO.getIssuingOrganization().trim();
         String activityName = recordAddDTO.getActivityName() == null ? "" : recordAddDTO.getActivityName().trim();
         String awardCategory = recordAddDTO.getAwardCategory() == null ? "" : recordAddDTO.getAwardCategory().trim();
         String awardLevel = recordAddDTO.getAwardLevel() == null ? "" : recordAddDTO.getAwardLevel().trim();
         String awardGrade = recordAddDTO.getAwardGrade() == null ? "" : recordAddDTO.getAwardGrade().trim();
-        String issuingOrganization = recordAddDTO.getIssuingOrganization().trim();
-        LocalDate awardDate = recordAddDTO.getAwardDate();
         String certificateNo = recordAddDTO.getCertificateNo() == null ? "" : recordAddDTO.getCertificateNo().trim();
         String description = recordAddDTO.getDescription() == null ? "" : recordAddDTO.getDescription().trim();
-        if(!"PERSONAL".equals(awardType) && !"CLASS".equals(awardType)){
+        if (awardName.isBlank() || issuingOrganization.isBlank()) {
+            return -2;
+        }
+        if (!"PERSONAL".equals(awardType) && !"CLASS".equals(awardType)) {
             return -3;
         }
-        if(studentUserId != null){
-            SysUser sysUser = sysUserMapper.selectById(studentUserId);
-            if(sysUser == null){
-                return -4;
-            }
-        }
-        SysClass sysClass = sysClassMapper.selectById(classId);
-        if(sysClass == null){
-            return -5;
-        }
-        if(awardName.length() > 200 || activityName.length() > 50 || awardCategory.length() > 50 || awardLevel.length() > 50 || awardGrade.length() > 50 || issuingOrganization.length() > 200 || certificateNo.length() > 100 || description.length() > 5000){
+        if (awardName.length() > 200 || activityName.length() > 200 || awardCategory.length() > 50 || awardLevel.length() > 50 || awardGrade.length() > 50 || issuingOrganization.length() > 200 || certificateNo.length() > 100 || description.length() > 5000) {
             return -6;
         }
-        LocalDateTime time = LocalDateTime.now();
         SysUser currentUser = dataScopeService.currentUser();
+        SysUser student = null;
+        Long studentUserId = null;
+        Long classId;
+        if ("PERSONAL".equals(awardType)) {
+            // 学生上传时，固定为本人，不使用前端传来的学生 ID。
+            studentUserId = "STUDENT".equals(currentUser.getRole()) ? currentUser.getId() : recordAddDTO.getStudentUserId();
+            if (studentUserId == null) {
+                return -2;
+            }
+            student = sysUserMapper.selectById(studentUserId);
+            if (student == null) {
+                return -4;
+            }
+            if (!"STUDENT".equals(student.getRole())) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "获奖用户必须是学生");
+            }
+            // 个人奖状的班级由学生信息确定。
+            classId = student.getClassId();
+        } else {
+            // 班级奖状没有获奖学生。
+            classId = recordAddDTO.getClassId();
+            if (classId == null) {
+                return -2;
+            }
+        }
+        if (classId == null) {
+            return -5;
+        }
+        SysClass targetClass = sysClassMapper.selectById(classId);
+        if (targetClass == null) {
+            return -5;
+        }
+        // 检查角色权限、教师负责的班级以及学生归属。
+        dataScopeService.checkCreateAward(awardType, student, targetClass);
+        LocalDateTime time = LocalDateTime.now();
         AwardRecord awardRecord = new AwardRecord();
         awardRecord.setAwardType(awardType);
-        awardRecord.setOrgId(currentUser.getOrgId());
+        // 使用奖状所属班级的组织，支持管理员跨组织上传。
+        awardRecord.setOrgId(targetClass.getOrgId());
+        awardRecord.setClassId(targetClass.getId());
         awardRecord.setStudentUserId(studentUserId);
-        awardRecord.setClassId(classId);
         awardRecord.setAwardName(awardName);
         awardRecord.setActivityName(activityName);
         awardRecord.setAwardCategory(awardCategory);
         awardRecord.setAwardLevel(awardLevel);
         awardRecord.setAwardGrade(awardGrade);
         awardRecord.setIssuingOrganization(issuingOrganization);
-        awardRecord.setAwardDate(awardDate);
+        awardRecord.setAwardDate(recordAddDTO.getAwardDate());
         awardRecord.setCertificateNo(certificateNo);
         awardRecord.setDescription(description);
+        awardRecord.setUploadedBy(currentUser.getId());
         awardRecord.setUpdatedBy(currentUser.getId());
         awardRecord.setIsDeleted(0);
-        awardRecord.setUpdatedBy(currentUser.getId());
         awardRecord.setCreateTime(time);
         awardRecord.setUpdateTime(time);
         if (baseMapper.insert(awardRecord) != 1) {

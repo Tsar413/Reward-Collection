@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.study.rewardCollection.common.Result;
 import com.study.rewardCollection.dto.AwardRecordAddDTO;
 import com.study.rewardCollection.entity.AwardRecord;
+import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.AwardRecordService;
 import jakarta.annotation.Resource;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +19,22 @@ public class AwardRecordController {
     @Resource
     private AwardRecordService service;
 
+    @Resource
+    private DataScopeService dataScopeService;
+
     @GetMapping("/all")
-    public ResponseEntity<Result<List<AwardRecord>>> getAllAwardRecords(){
-        return ResponseEntity.ok(Result.success(service.list()));
+    public ResponseEntity<Result<List<AwardRecord>>> getAllAwardRecords() {
+        return ResponseEntity.ok(Result.success(service.list(dataScopeService.awardQuery())));
     }
 
     @GetMapping("/classes/{classId}")
-    public ResponseEntity<Result<List<AwardRecord>>> getByClassId(@PathVariable Long classId){
-        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<AwardRecord>().eq("class_id", classId))));
+    public ResponseEntity<Result<List<AwardRecord>>> getByClassId(@PathVariable Long classId) {
+        return ResponseEntity.ok(Result.success(service.list(dataScopeService.awardQuery().eq("class_id", classId))));
     }
 
     @GetMapping("/students/{studentUserId}")
-    public ResponseEntity<Result<List<AwardRecord>>> getByStudentId(@PathVariable Long studentUserId){
-        return ResponseEntity.ok(Result.success(service.list(new QueryWrapper<AwardRecord>().eq("student_user_id", studentUserId))));
+    public ResponseEntity<Result<List<AwardRecord>>> getByStudentId(@PathVariable Long studentUserId) {
+        return ResponseEntity.ok(Result.success(service.list(dataScopeService.awardQuery().eq("student_user_id", studentUserId))));
     }
 
     @PostMapping("/add")

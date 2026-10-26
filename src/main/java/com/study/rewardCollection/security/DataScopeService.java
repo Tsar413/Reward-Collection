@@ -398,4 +398,29 @@ public class DataScopeService {
                 )
         );
     }
+
+    /**
+     * 修改、删除奖状之前调用。
+     */
+    public void checkAwardWrite(AwardRecord target) {
+        SysUser me = currentUser();
+
+        checkSameOrg(me, target.getOrgId());
+
+        if (isAdmin(me)) {
+            return;
+        }
+
+        // 按奖状保存的班级判断教师权限。
+        if (isTeacher(me)) {
+            checkTeacherClass(me, target.getClassId());
+            return;
+        }
+
+        // 学生只能修改、删除自己的个人奖状。
+        if (!"PERSONAL".equals(target.getAwardType())
+                || !Objects.equals(me.getId(), target.getStudentUserId())) {
+            throw forbidden("只能修改或删除自己的个人奖状");
+        }
+    }
 }

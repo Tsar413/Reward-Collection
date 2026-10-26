@@ -5,13 +5,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.study.rewardCollection.dto.StudentImportResultDTO;
 import com.study.rewardCollection.dto.SysUserRegisterDTO;
 import com.study.rewardCollection.dto.SysUserUpdateDTO;
-import com.study.rewardCollection.entity.SysClass;
-import com.study.rewardCollection.entity.SysOrg;
-import com.study.rewardCollection.entity.SysUser;
+import com.study.rewardCollection.entity.*;
 import com.study.rewardCollection.exception.ExcelImportException;
-import com.study.rewardCollection.mapper.SysClassMapper;
-import com.study.rewardCollection.mapper.SysOrgMapper;
-import com.study.rewardCollection.mapper.SysUserMapper;
+import com.study.rewardCollection.mapper.*;
 import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.SysUserService;
 import com.study.rewardCollection.util.PasswordUtil;
@@ -21,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,6 +39,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Resource
     private DataScopeService dataScope;
+
+    @Resource
+    private AwardRecordMapper awardRecordMapper;
+
+    @Resource
+    private SysLoginTokenMapper sysLoginTokenMapper;
 
     @Override
     public Integer registrationOne(SysUserRegisterDTO sysUserRegisterDTO) {
@@ -319,6 +322,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @Transactional
     public Integer deleteOneUser(Long id) {
         SysUser sysUser = baseMapper.selectById(id);
         if(sysUser == null){
@@ -331,8 +335,23 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 return -2;
             }
         }
-        // TODO 检查奖状
-        // TODO 检查Token
+        // 检查该用户是否为获奖学生、上传者或最后修改人。
+        Long awardCount = awardRecordMapper.selectCount(
+                new QueryWrapper<AwardRecord>()
+                        .and(w -> w
+                                .eq("student_user_id", id)
+                                .or()
+                                .eq("uploaded_by", id)
+                                .or()
+                                .eq("updated_by", id)
+                        )
+        );
+        if (awardCount > 0) {
+            return -3;
+        }
+        // 清理该用户的全部登录 Token。
+        // 没有 Token 时影响行数为 0，属于正常情况。
+        sysLoginTokenMapper.delete(new QueryWrapper<SysLoginToken>().eq("user_id", id));
         if(baseMapper.deleteById(sysUser) != 1){
             throw new RuntimeException("删除失败");
         }

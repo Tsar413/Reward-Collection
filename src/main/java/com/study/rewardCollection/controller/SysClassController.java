@@ -81,13 +81,16 @@ public class SysClassController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Result<Integer>> deleteOneClass(@PathVariable Long id){
+    public ResponseEntity<Result<Integer>> deleteOneClass(@PathVariable Long id) {
         Integer result = service.deleteOneClass(id);
         if (result == -4) {
             return ResponseEntity.status(404).body(new Result<Integer>(404, "班级不存在", null));
         }
         if (result == -3) {
-            return ResponseEntity.status(400).body(new Result<Integer>(400, "班级中存在学生", null));
+            return ResponseEntity.status(400).body(Result.badRequest("班级中存在学生，无法删除"));
+        }
+        if (result == -5) {
+            return ResponseEntity.status(400).body(Result.badRequest("班级中存在奖状，无法删除"));
         }
         return ResponseEntity.ok(Result.success(result));
     }

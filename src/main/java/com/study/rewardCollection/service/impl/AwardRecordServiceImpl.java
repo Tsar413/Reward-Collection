@@ -1,7 +1,9 @@
 package com.study.rewardCollection.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.study.rewardCollection.dto.AwardRecordAddDTO;
+import com.study.rewardCollection.dto.AwardRecordUpdateDTO;
 import com.study.rewardCollection.entity.AwardRecord;
 import com.study.rewardCollection.entity.SysClass;
 import com.study.rewardCollection.entity.SysUser;
@@ -109,6 +111,79 @@ public class AwardRecordServiceImpl extends ServiceImpl<AwardRecordMapper, Award
         awardRecord.setUpdateTime(time);
         if (baseMapper.insert(awardRecord) != 1) {
             throw new RuntimeException("保存失败");
+        }
+        return 1;
+    }
+
+    @Override
+    public Integer updateAwardRecord(Long id, AwardRecordUpdateDTO recordUpdateDTO) {
+        if (id == null) {
+            return -2;
+        }
+        AwardRecord target = baseMapper.selectById(id);
+        if (target == null) {
+            return -7;
+        }
+        dataScopeService.checkAwardWrite(target);
+        if (recordUpdateDTO == null || recordUpdateDTO.getAwardName() == null || recordUpdateDTO.getIssuingOrganization() == null || recordUpdateDTO.getAwardDate() == null) {
+            return -2;
+        }
+        String awardName = recordUpdateDTO.getAwardName().trim();
+        String issuingOrganization = recordUpdateDTO.getIssuingOrganization().trim();
+        String activityName = recordUpdateDTO.getActivityName() == null ? "" : recordUpdateDTO.getActivityName().trim();
+        String awardCategory = recordUpdateDTO.getAwardCategory() == null ? "" : recordUpdateDTO.getAwardCategory().trim();
+        String awardLevel = recordUpdateDTO.getAwardLevel() == null ? "" : recordUpdateDTO.getAwardLevel().trim();
+        String awardGrade = recordUpdateDTO.getAwardGrade() == null ? "" : recordUpdateDTO.getAwardGrade().trim();
+        String certificateNo = recordUpdateDTO.getCertificateNo() == null ? "" : recordUpdateDTO.getCertificateNo().trim();
+        String description = recordUpdateDTO.getDescription() == null ? "" : recordUpdateDTO.getDescription().trim();
+        if (awardName.isBlank() || issuingOrganization.isBlank()) {
+            return -2;
+        }
+        if (awardName.length() > 200 || activityName.length() > 200 || awardCategory.length() > 50 || awardLevel.length() > 50 || awardGrade.length() > 50 || issuingOrganization.length() > 200 || certificateNo.length() > 100 || description.length() > 5000) {
+            return -6;
+        }
+        SysUser currentUser = dataScopeService.currentUser();
+        LocalDateTime time = LocalDateTime.now();
+        // 明确指定允许修改的字段。
+        UpdateWrapper<AwardRecord> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", id)
+                .set("award_name", awardName)
+                .set("activity_name", activityName)
+                .set("award_category", awardCategory)
+                .set("award_level", awardLevel)
+                .set("award_grade", awardGrade)
+                .set("issuing_organization", issuingOrganization)
+                .set("award_date", recordUpdateDTO.getAwardDate())
+                .set("certificate_no", certificateNo)
+                .set("description", description)
+                .set("updated_by", currentUser.getId())
+                .set("update_time", time);
+        if (baseMapper.update(null, wrapper) != 1) {
+            throw new RuntimeException("修改失败");
+        }
+        return 1;
+    }
+
+    @Override
+    public Integer deleteAwardRecord(Long id) {
+        if (id == null) {
+            return -2;
+        }
+        AwardRecord target = baseMapper.selectById(id);
+        if (target == null) {
+            return -7;
+        }
+        dataScopeService.checkAwardWrite(target);
+        SysUser currentUser = dataScopeService.currentUser();
+        LocalDateTime time = LocalDateTime.now();
+        // 逻辑删除，同时记录操作人与操作时间。
+        UpdateWrapper<AwardRecord> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", id)
+                .set("is_deleted", 1)
+                .set("updated_by", currentUser.getId())
+                .set("update_time", time);
+        if (baseMapper.update(null, wrapper) != 1) {
+            throw new RuntimeException("删除失败");
         }
         return 1;
     }

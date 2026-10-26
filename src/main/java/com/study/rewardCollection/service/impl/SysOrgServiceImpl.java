@@ -3,9 +3,11 @@ package com.study.rewardCollection.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.study.rewardCollection.dto.SysOrgDTO;
+import com.study.rewardCollection.entity.AwardRecord;
 import com.study.rewardCollection.entity.SysClass;
 import com.study.rewardCollection.entity.SysOrg;
 import com.study.rewardCollection.entity.SysUser;
+import com.study.rewardCollection.mapper.AwardRecordMapper;
 import com.study.rewardCollection.mapper.SysClassMapper;
 import com.study.rewardCollection.mapper.SysOrgMapper;
 import com.study.rewardCollection.mapper.SysUserMapper;
@@ -27,6 +29,9 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
 
     @Resource
     private DataScopeService dataScope;
+
+    @Resource
+    private AwardRecordMapper awardRecordMapper;
 
     @Override
     public Integer addNewOrg(SysOrgDTO sysOrgDTO) {
@@ -105,8 +110,11 @@ public class SysOrgServiceImpl extends ServiceImpl<SysOrgMapper, SysOrg> impleme
         if(userCount > 0){
             return -3;
         }
-        // TODO 检查奖状是否存在组织
-
+        // 检查组织下是否存在未删除的个人奖状、班级奖状。
+        Long awardCount = awardRecordMapper.selectCount(new QueryWrapper<AwardRecord>().eq("org_id", id));
+        if (awardCount > 0) {
+            return -5;
+        }
         if(baseMapper.deleteById(id) != 1){
             throw new RuntimeException("删除失败");
         }

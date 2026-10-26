@@ -1,8 +1,8 @@
 package com.study.rewardCollection.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.study.rewardCollection.common.Result;
 import com.study.rewardCollection.dto.AwardRecordAddDTO;
+import com.study.rewardCollection.dto.AwardRecordUpdateDTO;
 import com.study.rewardCollection.entity.AwardRecord;
 import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.AwardRecordService;
@@ -37,6 +37,13 @@ public class AwardRecordController {
         return ResponseEntity.ok(Result.success(service.list(dataScopeService.awardQuery().eq("student_user_id", studentUserId))));
     }
 
+    @GetMapping("/one/{id}")
+    public ResponseEntity<Result<AwardRecord>> getOneAwardRecord(@PathVariable Long id) {
+        AwardRecord awardRecord = service.getOne(dataScopeService.awardQuery().eq("id", id));
+        // 按此前约定：不存在或不在可见范围内，返回成功和 null。
+        return ResponseEntity.ok(Result.success(awardRecord));
+    }
+
     @PostMapping("/add")
     public ResponseEntity<Result<Integer>> addNewRewardRecord(@RequestBody AwardRecordAddDTO recordAddDTO){
         Integer result = service.addAwardRecord(recordAddDTO);
@@ -54,6 +61,33 @@ public class AwardRecordController {
         }
         if (result == -6) {
             return ResponseEntity.status(400).body(Result.badRequest("数据长度有误"));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Result<Integer>> updateAwardRecord(@PathVariable Long id, @RequestBody AwardRecordUpdateDTO recordUpdateDTO) {
+        Integer result = service.updateAwardRecord(id, recordUpdateDTO);
+        if (result == -2) {
+            return ResponseEntity.status(400).body(Result.badRequest("必填数据不完整"));
+        }
+        if (result == -6) {
+            return ResponseEntity.status(400).body(Result.badRequest("数据长度有误"));
+        }
+        if (result == -7) {
+            return ResponseEntity.status(404).body(new Result<Integer>(404, "该奖状不存在", null));
+        }
+        return ResponseEntity.ok(Result.success(result));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Result<Integer>> deleteAwardRecord(@PathVariable Long id) {
+        Integer result = service.deleteAwardRecord(id);
+        if (result == -2) {
+            return ResponseEntity.status(400).body(Result.badRequest("奖状ID不能为空"));
+        }
+        if (result == -7) {
+            return ResponseEntity.status(404).body(new Result<Integer>(404, "该奖状不存在", null));
         }
         return ResponseEntity.ok(Result.success(result));
     }

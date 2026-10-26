@@ -83,16 +83,19 @@ public class SysUserController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Result<Integer>> deleteOneUser(@PathVariable Long id){
+    public ResponseEntity<Result<Integer>> deleteOneUser(@PathVariable Long id) {
         Integer result = service.deleteOneUser(id);
         if (result == -2) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Result<>(400, "老师与班级存在绑定", null));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.badRequest("教师仍绑定班级，请先调整班级负责人"));
+        }
+        if (result == -3) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Result.badRequest("用户仍关联奖状，无法删除"));
         }
         if (result == -4) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<>(404, "用户不存在", null));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Result<Integer>(404, "用户不存在", null));
         }
         if (result != 1) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Result<>(500, "删除用户失败", null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Result.error("删除用户失败"));
         }
         return ResponseEntity.ok(Result.success(result));
     }

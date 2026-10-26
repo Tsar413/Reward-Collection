@@ -66,16 +66,19 @@ public class SysOrgController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Result<Integer>> updateOrg(@PathVariable Long id){
+    public ResponseEntity<Result<Integer>> deleteOrg(@PathVariable Long id) {
         Integer result = service.deleteOrg(id);
         if (result == -4) {
             return ResponseEntity.status(404).body(new Result<Integer>(404, "组织不存在", null));
         }
-        if (result == -3) {
-            return ResponseEntity.status(400).body(new Result<Integer>(400, "组织中存在用户", null));
-        }
         if (result == -2) {
-            return ResponseEntity.status(400).body(new Result<Integer>(400, "组织中存在班级", null));
+            return ResponseEntity.status(400).body(Result.badRequest("组织中存在班级，无法删除"));
+        }
+        if (result == -3) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织中存在用户，无法删除"));
+        }
+        if (result == -5) {
+            return ResponseEntity.status(400).body(Result.badRequest("组织中存在奖状，无法删除"));
         }
         return ResponseEntity.ok(Result.success(result));
     }

@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.study.rewardCollection.dto.SysClassDTO;
 import com.study.rewardCollection.dto.SysClassUpdateDTO;
+import com.study.rewardCollection.entity.AwardRecord;
 import com.study.rewardCollection.entity.SysClass;
 import com.study.rewardCollection.entity.SysOrg;
 import com.study.rewardCollection.entity.SysUser;
+import com.study.rewardCollection.mapper.AwardRecordMapper;
 import com.study.rewardCollection.mapper.SysClassMapper;
 import com.study.rewardCollection.mapper.SysOrgMapper;
 import com.study.rewardCollection.mapper.SysUserMapper;
@@ -28,6 +30,9 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
 
     @Resource
     private DataScopeService dataScope;
+
+    @Resource
+    private AwardRecordMapper awardRecordMapper;
 
     @Override
     public Integer addNewClass(SysClassDTO sysClassDTO) {
@@ -140,8 +145,11 @@ public class SysClassServiceImpl extends ServiceImpl<SysClassMapper, SysClass> i
         if(userCount > 0){
             return -3;
         }
-        // TODO 检查奖状是否存在班级
-
+        // 检查关联该班级的个人奖状和班级奖状。
+        Long awardCount = awardRecordMapper.selectCount(new QueryWrapper<AwardRecord>().eq("org_id", sysClass.getOrgId()).eq("class_id", id));
+        if (awardCount > 0) {
+            return -5;
+        }
         if(baseMapper.deleteById(id) != 1){
             throw new RuntimeException("删除失败");
         }

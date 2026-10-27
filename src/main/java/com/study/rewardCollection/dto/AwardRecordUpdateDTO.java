@@ -21,7 +21,7 @@ public class AwardRecordUpdateDTO {
 
     private String issuingOrganization;
 
-    @JsonFormat(pattern = "yyyy-MM-dd", lenient = OptBoolean.FALSE)
+    @JsonFormat(pattern = "uuuu-MM-dd", lenient = OptBoolean.FALSE)
     private LocalDate awardDate;
 
     private String certificateNo;

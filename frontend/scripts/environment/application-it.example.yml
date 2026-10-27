@@ -1,0 +1,23 @@
+server:
+  address: 127.0.0.1
+  port: 18127
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:13327/reward_collection_it_frontend_20261027_153619?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+app:
+  award-image:
+    root: /home/tsar413/桌面/Java_Project/reward-collection/frontend_run_20261027_153619/uploads

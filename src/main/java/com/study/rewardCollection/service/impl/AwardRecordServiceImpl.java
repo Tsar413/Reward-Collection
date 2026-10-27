@@ -173,6 +173,7 @@ public class AwardRecordServiceImpl extends ServiceImpl<AwardRecordMapper, Award
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Integer deleteAwardRecord(Long id) {
         if (id == null) {
             return -2;

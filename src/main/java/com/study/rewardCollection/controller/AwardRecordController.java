@@ -47,7 +47,7 @@ public class AwardRecordController {
     }
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Result<Integer>> addNewRewardRecord(@RequestBody AwardRecordAddDTO recordAddDTO, @RequestPart("file") MultipartFile file){
+    public ResponseEntity<Result<Integer>> addNewRewardRecord(@RequestPart("data") AwardRecordAddDTO recordAddDTO, @RequestPart("file") MultipartFile file){
         Integer result = service.addAwardRecord(recordAddDTO, file);
         if (result == -2) {
             return ResponseEntity.status(400).body(Result.badRequest("必填数据不完整"));

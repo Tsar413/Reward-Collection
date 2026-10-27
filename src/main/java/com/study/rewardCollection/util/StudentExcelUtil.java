@@ -77,35 +77,58 @@ public final class StudentExcelUtil {
                 }
 
                 int rowNumber = row.getRowNum() + 1;
-                String id = "";
+                String userNo = "";
                 String realName = "";
-                String classId = "";
+                String classCode = "";
 
                 try {
-                    id = readText(row.getCell(0), rowNumber, "学号");
-                    realName = readText(row.getCell(1), rowNumber, "姓名");
-                    classId = readText(row.getCell(2), rowNumber, "班级编号");
+                    userNo = readText(
+                            row.getCell(0), rowNumber, "学号"
+                    );
+                    realName = readText(
+                            row.getCell(1), rowNumber, "姓名"
+                    );
+                    classCode = readText(
+                            row.getCell(2), rowNumber, "班级编号"
+                    );
 
-                    checkRequired(id, rowNumber, "学号");
+                    checkRequired(userNo, rowNumber, "学号");
                     checkRequired(realName, rowNumber, "姓名");
-                    checkRequired(classId, rowNumber, "班级编号");
+                    checkRequired(classCode, rowNumber, "班级编号");
 
-                    checkLength(id, rowNumber, "学号");
+                    checkLength(userNo, rowNumber, "学号");
                     checkLength(realName, rowNumber, "姓名");
-                    checkLength(classId, rowNumber, "班级编号");
+                    checkLength(classCode, rowNumber, "班级编号");
 
                     students.add(new StudentRow(
-                            rowNumber, id, realName, classId, null
+                            rowNumber,
+                            userNo,
+                            realName,
+                            classCode,
+                            null
                     ));
 
                 } catch (ExcelImportException e) {
-                    // 单行错误只记录，继续读取后面的行
+                    // 已知的字段校验错误。
                     students.add(new StudentRow(
                             rowNumber,
-                            id,
+                            userNo,
                             realName,
-                            classId,
+                            classCode,
                             e.getMessage()
+                    ));
+
+                } catch (RuntimeException e) {
+                    // 包含特殊日期编码等单元格读取异常。
+                    // 只记录本行失败，继续读取后续行。
+                    students.add(new StudentRow(
+                            rowNumber,
+                            userNo,
+                            realName,
+                            classCode,
+                            "第" + rowNumber
+                                    + "行：单元格内容或类型无法读取，"
+                                    + "请检查日期编码或重新填写该行"
                     ));
                 }
             }
@@ -148,28 +171,43 @@ public final class StudentExcelUtil {
     /**
      * 只检查需要导入的前三列。
      */
+    /**
+     * 只检查前三列。
+     * 无法读取的单元格不当作空行，交给行解析记录错误。
+     */
     private static boolean isEmptyRow(Row row) {
-        for (int i = 0; i < 3; i++) {
-            Cell cell = row.getCell(i);
+        try {
+            for (int i = 0; i < 3; i++) {
+                Cell cell = row.getCell(i);
 
-            if (cell == null || cell.getCellType() == CellType.BLANK) {
-                continue;
+                if (cell == null) {
+                    continue;
+                }
+
+                CellType type = cell.getCellType();
+
+                if (type == CellType.BLANK) {
+                    continue;
+                }
+
+                if (type == CellType.STRING
+                        && cell.getStringCellValue().isBlank()) {
+                    continue;
+                }
+
+                return false;
             }
 
-            if (cell.getCellType() == CellType.STRING
-                    && cell.getStringCellValue().isBlank()) {
-                continue;
-            }
-
+            return true;
+        } catch (RuntimeException e) {
             return false;
         }
-
-        return true;
     }
 
     /**
-     * 固定使用文本，避免编号前导零丢失或长学号精度丢失。
-     * 不接受公式、数字、日期等其他单元格类型。
+     * 接受文本和可安全表示的非负整数。
+     * 拒绝日期、公式、布尔值和错误单元格。
+     * 有前导零或长编号时，应使用文本单元格。
      */
     private static String readText(
             Cell cell, int rowNumber, String fieldName) {

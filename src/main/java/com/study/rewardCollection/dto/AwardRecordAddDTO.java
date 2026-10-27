@@ -1,6 +1,7 @@
 package com.study.rewardCollection.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.OptBoolean;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -29,7 +30,7 @@ public class AwardRecordAddDTO {
 
     private String issuingOrganization;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd", lenient = OptBoolean.FALSE)
     private LocalDate awardDate;
 
     private String certificateNo;

@@ -178,7 +178,7 @@ public class AwardRecordServiceImpl extends ServiceImpl<AwardRecordMapper, Award
         if (id == null) {
             return -2;
         }
-        AwardRecord target = baseMapper.selectById(id);
+        AwardRecord target = baseMapper.selectForUpdate(id);
         if (target == null) {
             return -7;
         }

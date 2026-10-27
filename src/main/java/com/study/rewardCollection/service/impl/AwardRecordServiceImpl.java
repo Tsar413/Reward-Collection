@@ -11,9 +11,12 @@ import com.study.rewardCollection.mapper.AwardRecordMapper;
 import com.study.rewardCollection.mapper.SysClassMapper;
 import com.study.rewardCollection.mapper.SysUserMapper;
 import com.study.rewardCollection.security.DataScopeService;
+import com.study.rewardCollection.service.AwardImageService;
 import com.study.rewardCollection.service.AwardRecordService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,8 +33,12 @@ public class AwardRecordServiceImpl extends ServiceImpl<AwardRecordMapper, Award
     @Resource
     private DataScopeService dataScopeService;
 
+    @Resource
+    private AwardImageService awardImageService;
+
     @Override
-    public Integer addAwardRecord(AwardRecordAddDTO recordAddDTO) {
+    @Transactional(rollbackFor = Exception.class)
+    public Integer addAwardRecord(AwardRecordAddDTO recordAddDTO, MultipartFile file) {
         if (recordAddDTO == null || recordAddDTO.getAwardType() == null || recordAddDTO.getAwardName() == null || recordAddDTO.getIssuingOrganization() == null || recordAddDTO.getAwardDate() == null) {
             return -2;
         }
@@ -112,6 +119,7 @@ public class AwardRecordServiceImpl extends ServiceImpl<AwardRecordMapper, Award
         if (baseMapper.insert(awardRecord) != 1) {
             throw new RuntimeException("保存失败");
         }
+        awardImageService.saveImage(awardRecord.getId(), file);
         return 1;
     }
 
@@ -174,6 +182,7 @@ public class AwardRecordServiceImpl extends ServiceImpl<AwardRecordMapper, Award
             return -7;
         }
         dataScopeService.checkAwardWrite(target);
+        awardImageService.deleteForAward(id);
         SysUser currentUser = dataScopeService.currentUser();
         LocalDateTime time = LocalDateTime.now();
         // 逻辑删除，同时记录操作人与操作时间。

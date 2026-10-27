@@ -24,7 +24,7 @@ public class AwardImage {
     @TableField("org_id")
     private Long orgId;
 
-    @Column(name = "award_id")
+    @Column(name = "award_id", nullable = false, unique = true)
     @TableField(value = "award_id")
     private Long awardId;
 

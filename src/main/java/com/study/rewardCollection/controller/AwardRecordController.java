@@ -7,8 +7,10 @@ import com.study.rewardCollection.entity.AwardRecord;
 import com.study.rewardCollection.security.DataScopeService;
 import com.study.rewardCollection.service.AwardRecordService;
 import jakarta.annotation.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -44,9 +46,9 @@ public class AwardRecordController {
         return ResponseEntity.ok(Result.success(awardRecord));
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<Result<Integer>> addNewRewardRecord(@RequestBody AwardRecordAddDTO recordAddDTO){
-        Integer result = service.addAwardRecord(recordAddDTO);
+    @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Result<Integer>> addNewRewardRecord(@RequestBody AwardRecordAddDTO recordAddDTO, @RequestPart("file") MultipartFile file){
+        Integer result = service.addAwardRecord(recordAddDTO, file);
         if (result == -2) {
             return ResponseEntity.status(400).body(Result.badRequest("必填数据不完整"));
         }

@@ -25,3 +25,6 @@ mybatis-plus:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
+app:
+  award-image:
+    root: ${AWARD_IMAGE_ROOT:./uploads/awards}

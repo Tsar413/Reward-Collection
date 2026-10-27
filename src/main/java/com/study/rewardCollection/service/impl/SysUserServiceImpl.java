@@ -46,6 +46,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Resource
     private SysLoginTokenMapper sysLoginTokenMapper;
 
+    @Resource
+    private AwardImageMapper awardImageMapper;
+
     @Override
     public Integer registrationOne(SysUserRegisterDTO sysUserRegisterDTO) {
         if(sysUserRegisterDTO == null || sysUserRegisterDTO.getOrgId() == null || sysUserRegisterDTO.getRealName() == null || sysUserRegisterDTO.getPassword() == null || sysUserRegisterDTO.getRole() == null || sysUserRegisterDTO.getUserNo() == null){
@@ -347,6 +350,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                         )
         );
         if (awardCount > 0) {
+            return -3;
+        }
+        // 图片的上传者可能与奖状最后修改人不同，需要单独检查。
+        Long imageCount = awardImageMapper.selectCount(new QueryWrapper<AwardImage>().eq("updated_by", id));
+        if (imageCount > 0) {
             return -3;
         }
         // 清理该用户的全部登录 Token。

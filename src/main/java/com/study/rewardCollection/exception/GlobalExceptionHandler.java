@@ -140,6 +140,36 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(code).body(new Result<Void>(code, message, null));
     }
 
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Result<Void>> handleUploadTooLarge(
+            MaxUploadSizeExceededException e
+    ) {
+        return error(
+                HttpStatus.valueOf(413),
+                "上传文件不能超过5MB，请同时检查请求总大小"
+        );
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<Result<Void>> handleMissingPart(
+            MissingServletRequestPartException e
+    ) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                "缺少上传参数：" + e.getRequestPartName()
+        );
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<Result<Void>> handleMultipart(
+            MultipartException e
+    ) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                "文件上传请求无效，请检查multipart/form-data格式"
+        );
+    }
+
     /**
      * 保持HTTP状态码与响应体code一致。
      */
